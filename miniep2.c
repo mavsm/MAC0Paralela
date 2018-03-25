@@ -14,23 +14,40 @@ int emptyStone; //frogsPosition[emptyStone] indica qual a pedra livre
 
 pthread_mutex_t jumpMutex;
 
+void imprimeLagoa() {
+	int i, j;
+	for(i=0; i<rocks; i++) {
+		for (j=0; j<rocks; j++) {
+			if (i == frogsPosition[j]) {
+				if (j!= rocks-1)
+					printf("%d, ", j);
+				else
+					printf("_, ");
+			}
+		}
+	}
+	printf("\n");
+
+}
+
 void *t_anfibio(void *arg) {
-	int i, aux, id = *(int *)arg;	
-	printf ("anfibio %d criado\n", id);
+	int i, j, aux;
+	int id = *(int*)arg;
 	pthread_mutex_unlock(&jumpMutex);
 	while (waitCreation == 0) {}
 
 	while(!DEAD){//o programa ainda ta rodando
 		pthread_mutex_lock(&jumpMutex); //LOCK
-
+		
 		if(canJump[id]) {//checa se pode pular
-			printf ("anfibio %d pulou\n", id);			
-			scanf ("%d", &i);
+			printf("anfibio %d pulando\n", id);
 			deadCounter = 0;// Pedra livre e o sapo trocam de posições
 			aux = frogsPosition[id];
 			frogsPosition[id] = frogsPosition[emptyStone];//pula
 			frogsPosition[emptyStone] = aux;
-			for(i=0; i<rocks; i++)
+			imprimeLagoa();
+
+			for(i=0; i<rocks-1; i++)
 				canJump[i] = 0;
 		}
 		else
@@ -40,9 +57,8 @@ void *t_anfibio(void *arg) {
 	pthread_exit(NULL);
 }
 
-
 int main(int argv, char** argc) {
-	int i, aux, id;
+	int i, j, aux, id;
 	int deadFlag, isCorrect;
 	pthread_t *threads;
 
@@ -59,13 +75,17 @@ int main(int argv, char** argc) {
 	emptyStone = rocks-1; // A pedra vazia é indicada por frogsPosition[emtyStone]
 
 	//frogsPosition[i] indica qual o local do sapo de id=1
+
 	frogsPosition = malloc((rocks)*sizeof(int));
+
 	//vetor das threads, se i<N é ra, cc é sapo
 	threads = malloc((rocks-1)*sizeof(pthread_t));
+
 	//vetor a ser checado para cada animal se ele pode ou nao pular
 	canJump = malloc((rocks-1)*sizeof(int));
 
-	for(i=0; i < rocks; i++)
+
+	for(i=0; i < rocks-1; i++)
 		canJump[i] = 0;
 
 	pthread_mutex_init(&jumpMutex, NULL);
@@ -76,18 +96,16 @@ int main(int argv, char** argc) {
 		id = i;
 		pthread_create(&threads[i], NULL, t_anfibio, &(id));
 	   	frogsPosition[i] = i;
-	   	printf ("%d sendo criado\n", i);
 
 	}
 	for (i=N+1; i<rocks; i++) {
 		pthread_mutex_lock(&jumpMutex);
 		id = i-1; // indica o id dos sapos
-		printf ("%d sendo criado\n", id);
 		pthread_create(&threads[id], NULL, t_anfibio, &(id));
 		frogsPosition[id] = i;
 	}
 	frogsPosition[emptyStone] = N; // A pedra vazia começa sendo a pedra do centro
-	sleep(3);
+	imprimeLagoa();
 	waitCreation = 1;
 
 	while(!DEAD){
@@ -107,9 +125,9 @@ int main(int argv, char** argc) {
 		   		}
 			}
 		}
-		for(i=0; i<rocks-1; i++)
+		/*for(i=0; i<rocks-1; i++)
 			printf("%d, ", canJump[i]);
-		printf("\n");
+		printf("\n");*/
 		pthread_mutex_unlock(&jumpMutex); //UNLOCK
 
 		if(deadFlag || deadCounter > 200000) DEAD = 1; //deadlock
@@ -117,7 +135,7 @@ int main(int argv, char** argc) {
 		//to pensando se vale a pena ter um sleep aqui pra garantir que alguns sapos/ras chequem se podem pular
 	}
 
-	for(i=0; i<rocks; i++) //espera as threads juntarem
+	for(i=0; i<rocks-1; i++) //espera as threads juntarem
 		pthread_join(threads[i], NULL);
 
 
