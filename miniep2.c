@@ -8,24 +8,28 @@ int rocks; //num de pedras
 int deadCounter; //contador de quantas tentativas falhas sucessivas de pulo teve
 int DEAD; //indica deadlock
 int waitCreation; //Flag para esperar a criação de todas as threads antes de
-                  //começar a execução  
+				  //começar a execução  
 int emptyStone; //frogsPosition[emptyStone] indica qual a pedra livre
 
 
 pthread_mutex_t jumpMutex;
 
 void *t_anfibio(void *arg) {
-	int i, aux, id = *(int *)arg;
+	int i, aux, id = *(int *)arg;	
+	printf ("anfibio %d criado\n", id);
+	pthread_mutex_unlock(&jumpMutex);
 	while (waitCreation == 0) {}
 
 	while(!DEAD){//o programa ainda ta rodando
 		pthread_mutex_lock(&jumpMutex); //LOCK
+
 		if(canJump[id]) {//checa se pode pular
-			deadCounter = 0;
-            		// Pedra livre e o sapo trocam de posições
-            		aux = frogsPosition[id];
+			printf ("anfibio %d pulou\n", id);			
+			scanf ("%d", &i);
+			deadCounter = 0;// Pedra livre e o sapo trocam de posições
+			aux = frogsPosition[id];
 			frogsPosition[id] = frogsPosition[emptyStone];//pula
-        	    	frogPosition[emptyStone] = aux;
+			frogsPosition[emptyStone] = aux;
 			for(i=0; i<rocks; i++)
 				canJump[i] = 0;
 		}
@@ -66,38 +70,49 @@ int main(int argv, char** argc) {
 
 	pthread_mutex_init(&jumpMutex, NULL);
 	waitCreation = 0; // esta flag é para todas as threads esperarem a criacão terminar
-                      // tava pensando em usar um mutex aqui.  
+					  // tava pensando em usar um mutex aqui.  
 	for (i=0; i<N; i++) {
-        	pthread_create(&threads[i], NULL, t_anfibio, &(i));
-        	frogsPosition[i] = i;
+		pthread_mutex_lock(&jumpMutex);
+		id = i;
+		pthread_create(&threads[i], NULL, t_anfibio, &(id));
+	   	frogsPosition[i] = i;
+	   	printf ("%d sendo criado\n", i);
+
 	}
 	for (i=N+1; i<rocks; i++) {
-        	id = i-1; // indica o id dos sapos
-        	pthread_create(&threads[id], NULL, t_anfibio, &(id));
-        	frogsPosition[id] = i;
-    	}
-    	frogsPosition[emptyStone] = N; // A pedra vazia começa sendo a pedra do centro
-    	waitCreation = 1;
+		pthread_mutex_lock(&jumpMutex);
+		id = i-1; // indica o id dos sapos
+		printf ("%d sendo criado\n", id);
+		pthread_create(&threads[id], NULL, t_anfibio, &(id));
+		frogsPosition[id] = i;
+	}
+	frogsPosition[emptyStone] = N; // A pedra vazia começa sendo a pedra do centro
+	sleep(3);
+	waitCreation = 1;
 
 	while(!DEAD){
 		deadFlag = 1;
 		pthread_mutex_lock(&jumpMutex); //LOCK
 		for(i=0; i<rocks; i++){
 			if (i<N){ //ra
-                		if (frogsPosition[i] +1 == frogsPosition[emptyStone] || frogsPosition[i]+2 == frogsPosition[emptyStone]){
-    					deadFlag = 0;	
-    					canJump[i] = 1;
-                		}
-			}else{ // sapo
-                		if (frogsPosition[i] -1 == frogsPosition[emptyStone] || frogsPosition[i]-2 == frogsPosition[emptyStone]) {
-    					deadFlag = 0;
-    					canJump[i] = 1;
-                		}
+				if (frogsPosition[i] +1 == frogsPosition[emptyStone] || frogsPosition[i]+2 == frogsPosition[emptyStone]){
+					deadFlag = 0;	
+					canJump[i] = 1;
+			   	}
+			}
+			else{ // sapo
+				if (frogsPosition[i] -1 == frogsPosition[emptyStone] || frogsPosition[i]-2 == frogsPosition[emptyStone]) {
+					deadFlag = 0;
+					canJump[i] = 1;
+		   		}
 			}
 		}
+		for(i=0; i<rocks-1; i++)
+			printf("%d, ", canJump[i]);
+		printf("\n");
 		pthread_mutex_unlock(&jumpMutex); //UNLOCK
 
-		if(deadFlag || deadCounter > 999) DEAD = 1; //deadlock
+		if(deadFlag || deadCounter > 200000) DEAD = 1; //deadlock
 
 		//to pensando se vale a pena ter um sleep aqui pra garantir que alguns sapos/ras chequem se podem pular
 	}
@@ -107,12 +122,12 @@ int main(int argv, char** argc) {
 
 
 	isCorrect = 1;
-	for(i=0; i<rocks; i++){ //checa a corretude do resultado
-		if(i < N && frogsPosition[i] <= N+1) { //sapos deveriam estar todos a frente da M-esima+1 pedra
+	for(i=0; i<rocks-1; i++){ //checa a corretude do resultado
+		if(i < N && frogsPosition[i] <= N-1) { //sapos deveriam estar todos a frente da M-esima+1 pedra
 			isCorrect = 0;
 			break;
 		}
-		if(i >= N && frogsPosition[i] > N+1) { //ras deveriam estar todas atras da M-esima pedra
+		if(i >= N && frogsPosition[i] >= N+1) { //ras deveriam estar todas atras da M-esima pedra
 			isCorrect = 0;
 			break;
 		}
