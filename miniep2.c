@@ -40,12 +40,10 @@ void *t_anfibio(void *arg) {
 		pthread_mutex_lock(&jumpMutex); //LOCK
 		
 		if(canJump[id]) {//checa se pode pular
-			printf("anfibio %d pulando\n", id);
 			deadCounter = 0;// Pedra livre e o sapo trocam de posições
 			aux = frogsPosition[id];
 			frogsPosition[id] = frogsPosition[emptyStone];//pula
 			frogsPosition[emptyStone] = aux;
-			imprimeLagoa();
 
 			for(i=0; i<rocks-1; i++)
 				canJump[i] = 0;
@@ -57,40 +55,20 @@ void *t_anfibio(void *arg) {
 	pthread_exit(NULL);
 }
 
-int main(int argv, char** argc) {
-	int i, j, aux, id;
-	int deadFlag, isCorrect;
-	pthread_t *threads;
-
+void criaLagoa(int N, pthread_t *threads) {
+	int i, id;
 	DEAD = 0; //DEAD indica deadlock
 	deadCounter = 0;
+	waitCreation = 0; // esta flag é para todas as threads esperarem a criacão terminar
+					  // tava pensando em usar um mutex aqui. 
 
-	// Perguntaram no paca e é para ter somente um argumento
-	if(argv != 2) {
-		printf("Número de argumentos incorreto.\n");
-		return 0;
-	}
-	rocks = atoi(argc[1]); // Numero de pedras no lago
-	int N = (rocks-1)/2; // Quantidade de sapos na lago
-	emptyStone = rocks-1; // A pedra vazia é indicada por frogsPosition[emtyStone]
-
-	//frogsPosition[i] indica qual o local do sapo de id=1
-
-	frogsPosition = malloc((rocks)*sizeof(int));
-
-	//vetor das threads, se i<N é ra, cc é sapo
-	threads = malloc((rocks-1)*sizeof(pthread_t));
-
-	//vetor a ser checado para cada animal se ele pode ou nao pular
-	canJump = malloc((rocks-1)*sizeof(int));
-
+	frogsPosition = malloc((rocks)*sizeof(int));//frogsPosition[i] indica qual o local do sapo de id=1
+	canJump = malloc((rocks-1)*sizeof(int));//vetor a ser checado para cada animal se ele pode ou nao pular
 
 	for(i=0; i < rocks-1; i++)
 		canJump[i] = 0;
 
 	pthread_mutex_init(&jumpMutex, NULL);
-	waitCreation = 0; // esta flag é para todas as threads esperarem a criacão terminar
-					  // tava pensando em usar um mutex aqui.  
 	for (i=0; i<N; i++) {
 		pthread_mutex_lock(&jumpMutex);
 		id = i;
@@ -105,40 +83,41 @@ int main(int argv, char** argc) {
 		frogsPosition[id] = i;
 	}
 	frogsPosition[emptyStone] = N; // A pedra vazia começa sendo a pedra do centro
-	imprimeLagoa();
-	waitCreation = 1;
 
+	waitCreation = 1;
+	return;
+}
+
+void arbitro (int N) {
+	int i, cantJump;
 	while(!DEAD){
-		deadFlag = 1;
+		cantJump = 1;
 		pthread_mutex_lock(&jumpMutex); //LOCK
 		for(i=0; i<rocks; i++){
 			if (i<N){ //ra
 				if (frogsPosition[i] +1 == frogsPosition[emptyStone] || frogsPosition[i]+2 == frogsPosition[emptyStone]){
-					deadFlag = 0;	
+					cantJump = 0;	
 					canJump[i] = 1;
 			   	}
 			}
 			else{ // sapo
 				if (frogsPosition[i] -1 == frogsPosition[emptyStone] || frogsPosition[i]-2 == frogsPosition[emptyStone]) {
-					deadFlag = 0;
+					cantJump = 0;
 					canJump[i] = 1;
 		   		}
 			}
 		}
-		/*for(i=0; i<rocks-1; i++)
-			printf("%d, ", canJump[i]);
-		printf("\n");*/
 		pthread_mutex_unlock(&jumpMutex); //UNLOCK
 
-		if(deadFlag || deadCounter > 200000) DEAD = 1; //deadlock
-
+		if(cantJump || deadCounter > 200000) 
+			DEAD = 1; //deadlock
 		//to pensando se vale a pena ter um sleep aqui pra garantir que alguns sapos/ras chequem se podem pular
 	}
+	return;
+}
 
-	for(i=0; i<rocks-1; i++) //espera as threads juntarem
-		pthread_join(threads[i], NULL);
-
-
+int confereResultado(int N) {
+	int i, isCorrect;
 	isCorrect = 1;
 	for(i=0; i<rocks-1; i++){ //checa a corretude do resultado
 		if(i < N && frogsPosition[i] <= N-1) { //sapos deveriam estar todos a frente da M-esima+1 pedra
@@ -150,16 +129,47 @@ int main(int argv, char** argc) {
 			break;
 		}
 	}
+	return isCorrect;
+}
 
-	free(threads);
-	free(frogsPosition);
-	free(canJump);
-	pthread_mutex_destroy(&jumpMutex);
+int main(int argv, char** argc) {
+	int i, cont = 0;
+	pthread_t *threads;
 
-	if(isCorrect)
-		printf("O resultado é correto.\n");
-	else
-		printf("O resultado é incorreto!\n");
+	
+
+	// Perguntaram no paca e é para ter somente um argumento
+	if(argv != 2) {
+		printf("Número de argumentos incorreto.\n");
+		return 0;
+	}
+	rocks = atoi(argc[1]); // Numero de pedras no lago
+	int N = (rocks-1)/2; // Quantidade de sapos na lago
+	emptyStone = rocks-1; // A pedra vazia é indicada por frogsPosition[emtyStone]
+
+	while(1) {
+		threads = malloc((rocks-1)*sizeof(pthread_t*));//vetor das threads, se i < N é ra, cc é sapo
+		criaLagoa(N, threads);
+
+		arbitro(N);
+
+		for(i=0; i<rocks-1; i++) //espera as threads juntarem
+			pthread_join(threads[i], NULL);	
+
+		if(confereResultado(N))
+			break;
+		else 
+			cont++;
+
+		//imprimeLagoa();
+		free(threads);
+		free(frogsPosition);
+		free(canJump);
+		pthread_mutex_destroy(&jumpMutex);
+	}
+
+	printf("%d resultados incorretos até funcionar\n", cont);
+
 
 	return 0;
 }
