@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <pthread.h>
-#include <unistd.h> // Biblioteca da função sleep
 
 int *frogsPosition, *canJump; //vetores de controle
 int rocks; //num de pedras
@@ -31,7 +31,7 @@ void imprimeLagoa() {
 }
 
 void *t_anfibio(void *arg) {
-	int i, j, aux;
+	int i, aux;
 	int id = *(int*)arg;
 	pthread_mutex_unlock(&jumpMutex);
 	while (waitCreation == 0) {}
@@ -135,9 +135,9 @@ int confereResultado(int N) {
 int main(int argv, char** argc) {
 	int i, cont = 0;
 	pthread_t *threads;
-
+	clock_t start, end;
 	
-
+	start = clock();
 	// Perguntaram no paca e é para ter somente um argumento
 	if(argv != 2) {
 		printf("Número de argumentos incorreto.\n");
@@ -156,7 +156,7 @@ int main(int argv, char** argc) {
 		for(i=0; i<rocks-1; i++) //espera as threads juntarem
 			pthread_join(threads[i], NULL);	
 
-		if(confereResultado(N))
+		if(confereResultado(N)) 
 			break;
 		else 
 			cont++;
@@ -169,6 +169,15 @@ int main(int argv, char** argc) {
 	}
 
 	printf("%d resultados incorretos até funcionar\n", cont);
+	printf("Estado final da lagoa:\n");
+	imprimeLagoa();
+	end = clock();
+	printf("execucao durou %.2f segundos\n", (float)(end-start)/CLOCKS_PER_SEC);
+
+	free(threads);
+	free(frogsPosition);
+	free(canJump);
+	pthread_mutex_destroy(&jumpMutex);
 
 
 	return 0;

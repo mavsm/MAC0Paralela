@@ -1,12 +1,8 @@
-CFLAGS = -lpthread
-# -ansi -Wall -O2 -g
+CFLAGS = -lpthread -Wall -g
 CC = gcc
 
 default:
 	${CC}  miniep2.c ${CFLAGS} -o executavel
 
-compile:
-	${CC}  miniep2.c ${CFLAGS} -o executavel
-
-ex:
+run:
 	./executavel 5
