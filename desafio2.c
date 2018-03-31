@@ -5,7 +5,7 @@
 
 int THREAD_NUM = 10;
 
-void thrd(){
+void* thrd(){
 	int i, vetor[100];
 	for(i=0; i<100; i++)
 		vetor[i] = i;
