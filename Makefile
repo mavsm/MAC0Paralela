@@ -1,8 +1,11 @@
-CFLAGS = -lpthread -Wall -g
+CFLAGS = -lpthread -g
 CC = gcc
 
 default:
-	${CC}  miniep2.c ${CFLAGS} -o executavel
+	${CC}  desafio2.c ${CFLAGS} -o executavel
 
-run:
-	./executavel 5
+run4:
+	./executavel 10000000 4 < entrada
+
+run2:
+	./executavel 10000000 4 < entrada2
