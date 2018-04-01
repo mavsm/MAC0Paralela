@@ -1,4 +1,4 @@
-CFLAGS = -lpthread -g
+CFLAGS = -lpthread -Wall -g
 CC = gcc
 
 default:

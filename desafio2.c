@@ -4,27 +4,16 @@
 #include <time.h>
 #include <pthread.h>
 
-int THREAD_NUM = 10;
 int creationFlag, vectorSize, numberOfThreads;
-pthread_mutex_t creationMutex;
 
 void *thrd(void *arg){
-	int i, x;
+	int x = vectorSize/numberOfThreads;
 	int *vector = *(int**)arg;
-	x= vectorSize/numberOfThreads;
 
 	while(creationFlag == 0);
 
-	for (i=0; i<x; i++)
-		vector[i]++;
-
-<<<<<<< HEAD
-=======
-void* thrd(){
-	int i, vetor[100];
-	for(i=0; i<100; i++)
-		vetor[i] = i;
->>>>>>> d430bf7dabe9798b870c493ce163ea7d70a07b6c
+	for (int i=0; i<x; i++)
+		vector[i]++;	
 	pthread_exit(NULL);
 }
 
@@ -55,10 +44,10 @@ int main (int argc, char *argv[]) {
 	int i;
 	int *CPUs, **vectors;
 	pthread_t *threads;
+	clock_t start;	
 	cpu_set_t *cpuset;
-	clock_t start, end;
-
-	start = clock();
+	
+	//Recebimento de argumentos
 	if (argc < 3 ) {
 		printf ("Argumentos não válidos\n");
 		return 0;
@@ -66,43 +55,28 @@ int main (int argc, char *argv[]) {
 	vectorSize = atoi(argv[1]);
 	numberOfThreads = atoi (argv[2]);
 
+	//Alocação de espaço
 	CPUs = malloc(numberOfThreads*sizeof(int));
-	for (i=0; i<numberOfThreads; i++) {
-		scanf("%d", &CPUs[i]);
-	}
-	vectors = createVectors();
-
-	cpuset = malloc(numberOfThreads*sizeof(cpu_set_t));
-	for (i=0; i<numberOfThreads; i++)
-        CPU_SET(CPUs[i], &cpuset[i]);
-
-    pthread_mutex_init(&creationMutex, NULL);
-    creationFlag = 0;
+	cpuset = malloc(numberOfThreads*sizeof(cpu_set_t));	
     threads = malloc(numberOfThreads*sizeof(pthread_t));
+
+    //Criação das threads
+	vectors = createVectors();
+    creationFlag = 0;
 	for (i=0; i<numberOfThreads; i++) {
-		//pthread_mutex_lock(&creationMutex);
 		pthread_create(&threads[i], NULL, thrd, &(vectors[i]));
+		// Recebe como input o numero da cpu a ser usada
+		scanf("%d", &CPUs[i]);
+		CPU_SET(CPUs[i], &cpuset[i]);
 		pthread_setaffinity_np(threads[i], sizeof(cpu_set_t), &cpuset[i]);
-		//pthread_mutex_unlock(&creationMutex);
 	}
+
+	start = clock();
 	creationFlag = 1;
 
 	for(i=0; i<numberOfThreads; i++) //espera as threads juntarem
 		pthread_join(threads[i], NULL);
-
-	printf("%ld\n", clock()-start);
-
-
-
-
-
-/*	threads = malloc(THREAD_NUM*sizeof(pthread_t));
-
-	for(i=0; i<THREAD_NUM; i++)
-		pthread_create(&threads[i], NULL, thrd, NULL);
-
-	for(i=0; i<THREAD_NUM; i++)
-		pthread_join(threads[i], NULL);*/
+	printf("A execução demorou %ld clocks\n", clock()-start);
 
 	return 0;
 }
