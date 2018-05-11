@@ -49,7 +49,8 @@ void MatMul_omp() {}
 
 int main(int argc, char **argv) {
 	FILE *AFile, *BFile, *CFile;
-	int i;
+	int i, j;
+	double v;
 
 	if(argc != 5) printf("Número errado de argumentos, devem ser 4.\n");
 
@@ -71,9 +72,19 @@ int main(int argc, char **argv) {
 	for(i=0; i<P; i++) C[i] = malloc(P*sizeof(double));
 
 	//Le as matrizes:
+	for(i=0; i<N; i++)
+		for(j=0; j<P; j++)
+			A[i][j] = 0;
+	for(i=0; i<P; i++)
+		for(j=0; j<M; j++)
+			B[i][j] = 0;
 
-
-
+	while(fscanf(AFile, "%d %d %lf", &i, &j, &v))
+		A[i][j] = v;
+	while(fscanf(BFile, "%d %d %lf", &i, &j, &v))
+		B[i][j] = v;
+	
+	
 	//Implementação
 	if(argv[1] == "p") //implementação em ptrheads
 		MatMul_ptrheads();
