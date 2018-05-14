@@ -1,17 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <omp.h>
 
 double **A, **B, **C;
 int M, N, P;
+
+//LEMBRANDO QUE O A USADO EH TAL QUE A(usado) = A(dado)^T
+
 
 //lembremos que C[a][b] = SUM(A[a][0..P]B[0..P][b])
 double multiplicaLocal(int a, int b){
 	double sum = 0;
 	int i;
 	for(i=0; i<P; i++){
-		sum += A[a][i]*B[i][b];
+		sum += A[i][a]*B[i][b];
 	}
 	return sum;
 }
@@ -22,7 +27,7 @@ void *func_threads(void *arg) {
 	int i;
 
 	for(i=0; i<M; i++) {
-		C[i][id] = multiplicaLocal(i, id)
+		C[i][id] = multiplicaLocal(i, id);
 
 	}
 	pthread_exit(NULL);
@@ -31,7 +36,7 @@ void *func_threads(void *arg) {
 //Funcão que coordena as threads
 void MatMul_ptrheads() {
 	pthread_t *threads;
-	int i, j;
+	int i;
 
 	threads = malloc(N*sizeof(pthread_t));
 
@@ -39,12 +44,19 @@ void MatMul_ptrheads() {
 	for(i=0; i<N; i++)
 		pthread_create(&threads[i], NULL, func_threads, &(i));
 
-	for(i=0, i<N; i++)
+	for(i=0; i<N; i++)
 		pthread_join(threads[i], NULL);
 }
 
 //Função de coordenação de omp
-void MatMul_omp() {}
+void MatMul_omp() {
+	int i, j;
+	for(i=0; i<M; i++) {
+		#pragma omp parallel for
+		for(j=0; i<N; j++)
+			C[i][j] = multiplicaLocal(i, j);
+	}
+}
 
 
 int main(int argc, char **argv) {
@@ -79,16 +91,16 @@ int main(int argc, char **argv) {
 		for(j=0; j<M; j++)
 			B[i][j] = 0;
 
-	while(fscanf(AFile, "%d %d %lf", &i, &j, &v))
-		A[i][j] = v;
+	while(fscanf(AFile, "%d %d %lf", &i, &j, &v)) //trabalhamos com A^T para minimizar troca de cache
+		A[j][i] = v;
 	while(fscanf(BFile, "%d %d %lf", &i, &j, &v))
 		B[i][j] = v;
 	
 	
 	//Implementação
-	if(argv[1] == "p") //implementação em ptrheads
+	if(!strcmp(argv[1], "p")) //implementação em ptrheads
 		MatMul_ptrheads();
-	if(argv[1] == "o") //implementação em omp
+	if(!strcmp(argv[1], "o")) //implementação em omp
 		MatMul_omp();
 
 
