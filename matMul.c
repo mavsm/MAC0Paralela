@@ -118,5 +118,6 @@ int main(int argc, char **argv) {
 	for(i=0; i<P; i++) free(C[i]);
 	free(C);
 	
+	return 0;
 
 }
