@@ -53,7 +53,7 @@ void MatMul_omp() {
 	int i, j;
 	for(i=0; i<M; i++) {
 		#pragma omp parallel for
-		for(j=0; i<N; j++)
+		for(j=0; j<N; j++)
 			C[i][j] = multiplicaLocal(i, j);
 	}
 }
