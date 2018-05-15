@@ -6,6 +6,11 @@
 #include <omp.h>
 
 double **A, **B, **C;
+
+//A(dado)[N][P]
+//B[P][M]
+//C[N][M]
+
 int M, N, P;
 
 //LEMBRANDO QUE O A USADO EH TAL QUE A(usado) = A(dado)^T
@@ -27,7 +32,7 @@ void *func_threads(void *arg) {
 	int i;
 
 	for(i=0; i<M; i++) {
-		C[i][id] = multiplicaLocal(i, id);
+		C[id][i] = multiplicaLocal(id, i);
 
 	}
 	pthread_exit(NULL);
@@ -40,7 +45,7 @@ void MatMul_ptrheads() {
 
 	threads = malloc(N*sizeof(pthread_t));
 
-	//A minha ideia é fazer t <= N threads, e fazer cada coluna/linha de C paralelamente
+	//A minha ideia é fazer t <= M threads, e fazer cada coluna/linha de C paralelamente
 	for(i=0; i<N; i++)
 		pthread_create(&threads[i], NULL, func_threads, &(i));
 
@@ -73,8 +78,8 @@ int main(int argc, char **argv) {
 	//Inicializa as matrizes:
 
 	fscanf(AFile, "%d %d", &N, &P);
-	A = malloc(N*sizeof(double*));
-	for(i=0; i<N; i++) A[i] = malloc(P*sizeof(double));
+	A = malloc(P*sizeof(double*));
+	for(i=0; i<P; i++) A[i] = malloc(N*sizeof(double));
 
 	fscanf(BFile, "%d %d", &P, &M);
 	B = malloc(P*sizeof(double*));
@@ -86,7 +91,7 @@ int main(int argc, char **argv) {
 	//Le as matrizes:
 	for(i=0; i<N; i++)
 		for(j=0; j<P; j++)
-			A[i][j] = 0;
+			A[j][i] = 0;
 	for(i=0; i<P; i++)
 		for(j=0; j<M; j++)
 			B[i][j] = 0;
