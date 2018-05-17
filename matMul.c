@@ -7,13 +7,15 @@
 
 double **A, **B, **C;
 
-//A(dado)[N][P]
-//B[P][M]
-//C[N][M]
+//A(dado)[M][P]
+//B[P][N]
+//C[M][N]
 
 int M, N, P;
+pthread_mutex_t idMutex;
 
-//LEMBRANDO QUE O A USADO EH TAL QUE A(usado) = A(dado)^T
+
+//LEMBRANDO QUE O A USADO EH TAL QUE B(usado) = B(dado)^T
 
 
 //lembremos que C[a][b] = SUM(A[a][0..P]B[0..P][b])
@@ -21,7 +23,7 @@ double multiplicaLocal(int a, int b){
 	double sum = 0;
 	int i;
 	for(i=0; i<P; i++){
-		sum += A[i][a]*B[i][b];
+		sum += A[a][i]*B[b][i];
 	}
 	return sum;
 }
@@ -30,8 +32,9 @@ double multiplicaLocal(int a, int b){
 void *func_threads(void *arg) {
 	int id = *(int*)arg;
 	int i;
+	pthread_mutex_unlock(&idMutex);
 
-	for(i=0; i<M; i++) {
+	for(i=0; i<N; i++) {
 		C[id][i] = multiplicaLocal(id, i);
 
 	}
@@ -41,15 +44,19 @@ void *func_threads(void *arg) {
 //Funcão que coordena as threads
 void MatMul_ptrheads() {
 	pthread_t *threads;
-	int i;
+	int i, id;
 
-	threads = malloc(N*sizeof(pthread_t));
+	threads = malloc(M*sizeof(pthread_t));
 
 	//A minha ideia é fazer t <= M threads, e fazer cada coluna/linha de C paralelamente
-	for(i=0; i<N; i++)
-		pthread_create(&threads[i], NULL, func_threads, &(i));
+	pthread_mutex_init(&idMutex, NULL);
+	for(i=0; i<M; i++) {
+		pthread_mutex_lock(&idMutex);
+		id = i;
+		pthread_create(&threads[i], NULL, func_threads, &(id));
+	}
 
-	for(i=0; i<N; i++)
+	for(i=0; i<M; i++)
 		pthread_join(threads[i], NULL);
 }
 
@@ -77,29 +84,30 @@ int main(int argc, char **argv) {
 
 	//Inicializa as matrizes:
 
-	fscanf(AFile, "%d %d", &N, &P);
-	A = malloc(P*sizeof(double*));
-	for(i=0; i<P; i++) A[i] = malloc(N*sizeof(double));
+	fscanf(AFile, "%d %d", &M, &P);
+	A = malloc(M*sizeof(double*));
+	for(i=0; i<M; i++) A[i] = malloc(P*sizeof(double));
 
-	fscanf(BFile, "%d %d", &P, &M);
-	B = malloc(P*sizeof(double*));
-	for(i=0; i<P; i++) B[i] = malloc(M*sizeof(double));
+	fscanf(BFile, "%d %d", &P, &N); // Esta vai ser transposta
+	B = malloc(N*sizeof(double*));
+	for(i=0; i<N; i++) B[i] = malloc(P*sizeof(double));
 
-	C = malloc(P*sizeof(double*));
-	for(i=0; i<P; i++) C[i] = malloc(P*sizeof(double));
+	C = malloc(M*sizeof(double*));
+	for(i=0; i<M; i++) C[i] = malloc(N*sizeof(double));
 
 	//Le as matrizes:
-	for(i=0; i<N; i++)
+	for(i=0; i<M; i++)
 		for(j=0; j<P; j++)
-			A[j][i] = 0;
+			A[i][j] = 0;
 	for(i=0; i<P; i++)
-		for(j=0; j<M; j++)
-			B[i][j] = 0;
+		for(j=0; j<N; j++)
+			B[j][i] = 0;
+	printf("OI\n");
 
-	while(fscanf(AFile, "%d %d %lf", &i, &j, &v)) //trabalhamos com A^T para minimizar troca de cache
-		A[j][i] = v;
-	while(fscanf(BFile, "%d %d %lf", &i, &j, &v))
-		B[i][j] = v;
+	while(EOF != fscanf(AFile, "%d %d %lf", &i, &j, &v)) //trabalhamos com B^T para minimizar troca de cache
+		A[i][j] = v;
+	while(EOF != fscanf(BFile, "%d %d %lf", &i, &j, &v))
+		B[j][i] = v;
 	
 	
 	//Implementação
@@ -108,19 +116,26 @@ int main(int argc, char **argv) {
 	if(!strcmp(argv[1], "o")) //implementação em omp
 		MatMul_omp();
 
+	for(i=0; i<M; i++) {
+		for (j=0; j<N; j++)
+			printf("%lf ", C[i][j]);
+		printf("\n");
+	}
 
 	//Fechamento
+	pthread_mutex_destroy(&idMutex);
+
 	fclose(AFile);
 	fclose(BFile);
 	fclose(CFile);
 
-	for(i=0; i<N; i++) free(A[i]);
+	for(i=0; i<M; i++) free(A[i]);
 	free(A);
 
-	for(i=0; i<P; i++) free(B[i]);
+	for(i=0; i<N; i++) free(B[i]);
 	free(B);
 
-	for(i=0; i<P; i++) free(C[i]);
+	for(i=0; i<M; i++) free(C[i]);
 	free(C);
 	
 	return 0;
