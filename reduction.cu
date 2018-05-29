@@ -9,12 +9,13 @@
 int *S; //N matrizes 3x3
 int *min;
 
-//9 blocos, cada um d  threads, checa um dos 9 elementos [i][j] das matrizes
+//9 blocos, cada um d N/2 threads
 
 __global__ void findMin(int N) {
 	int tId = threadIdx.x;
 	int bId = blockId.x;
 
+	//A cada round toda thread tem um "companheiro" na outra metade de round. Desse modo todo elemento é checado
 	for(unsigned int round=N/2; round>0; round/=2) {
 		if(tId < round) {
 			if(S[tId + bId] > S[tId+round*9+bId])
@@ -39,7 +40,7 @@ int main(int argc, char **argv) {
 	int numMatrix;
 	int threadsPerBlock, blockNum;
 
-
+	//inicializa
 	if(argc != 2) {
 		printf("Número errado de argumentos!!\n");
 		return 1;
@@ -52,13 +53,15 @@ int main(int argc, char **argv) {
 	cudaMallocManaged(&S, 9*numMatrix*sizeof(int));
 	cudaMallocManaged(&min, 9*sizeof(int));
 
+
+	//executa
 	threadsPerBlock = N/2;
 	blockNum = 9;
 
 	findMin<<< blockNum, threadsPerBlock >>>(numMatrix);
 	cudaDeviceSynchronize();
 
-
+	//free
 	cudaFree(S);
 	cudaFree(min);
 
