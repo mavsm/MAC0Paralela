@@ -54,12 +54,23 @@ int main(int argc, char **argv) {
 	cudaMallocManaged(&min, 9*sizeof(int));
 
 
+	for(i=0;i<numMatrix*9; i+=9) {
+		fscanf(lista, "");
+		fscanf(lista, "%d %d %d", &S[i] &S[i+1] &S[i+2]);
+		fscanf(lista, "%d %d %d", &S[i+3] &S[i+1+3] &S[i+2+3]);
+		fscanf(lista, "%d %d %d", &S[i+6] &S[i+1+6] &S[i+2+6]);
+	}
+
+
 	//executa
-	threadsPerBlock = N/2;
+	threadsPerBlock = numMatrix/2;
 	blockNum = 9;
 
 	findMin<<< blockNum, threadsPerBlock >>>(numMatrix);
 	cudaDeviceSynchronize();
+
+	for(i=0; i<3; i+=3)
+		printf("%d %d %d\n", min[i] min[i+1] min[i+2])
 
 	//free
 	cudaFree(S);
