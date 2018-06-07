@@ -1,6 +1,6 @@
-CFLAGS = -lpthread -Wall -g
-CC = gcc
+CFLAGS = -lpthread
+CC = nvcc
 
 default:
-	nvcc  reduction.cu ${CFLAGS} -o executavel
+	${CC}  reduction.cu ${CFLAGS} -o executavel
 

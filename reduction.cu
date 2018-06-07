@@ -2,18 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
 #include <cuda_runtime.h>
-#include <helper_functions.h>
 
-int *S; //N matrizes 3x3
-int *min;
 
 //9 blocos, cada um d N/2 threads
 
-__global__ void findMin(int N) {
+__global__ 
+void findMin(int N, int *S, int *min) {
 	int tId = threadIdx.x;
-	int bId = blockId.x;
+	int bId = blockIdx.x;
 
 	//A cada round toda thread tem um "companheiro" na outra metade de round. Desse modo todo elemento é checado
 	for(unsigned int round=N/2; round>0; round/=2) {
@@ -28,7 +25,7 @@ __global__ void findMin(int N) {
 		}
 		
 
-		_syncthreads();
+		__syncthreads();
 	}
 	if(tId == 0)
 		min[bId] = S[bId];
@@ -37,7 +34,9 @@ __global__ void findMin(int N) {
 
 int main(int argc, char **argv) {
 	FILE *lista;
-	int numMatrix;
+	int numMatrix, i;
+	int *S; //N matrizes 3x3
+	int *min;
 	int threadsPerBlock, blockNum;
 
 	//inicializa
@@ -56,9 +55,9 @@ int main(int argc, char **argv) {
 
 	for(i=0;i<numMatrix*9; i+=9) {
 		fscanf(lista, "");
-		fscanf(lista, "%d %d %d", &S[i] &S[i+1] &S[i+2]);
-		fscanf(lista, "%d %d %d", &S[i+3] &S[i+1+3] &S[i+2+3]);
-		fscanf(lista, "%d %d %d", &S[i+6] &S[i+1+6] &S[i+2+6]);
+		fscanf(lista, "%d %d %d", &S[i], &S[i+1], &S[i+2]);
+		fscanf(lista, "%d %d %d", &S[i+3], &S[i+1+3], &S[i+2+3]);
+		fscanf(lista, "%d %d %d", &S[i+6], &S[i+1+6], &S[i+2+6]);
 	}
 
 
@@ -66,11 +65,12 @@ int main(int argc, char **argv) {
 	threadsPerBlock = numMatrix/2;
 	blockNum = 9;
 
-	findMin<<< blockNum, threadsPerBlock >>>(numMatrix);
+	findMin<<< blockNum, threadsPerBlock >>>(numMatrix, S, min);
 	cudaDeviceSynchronize();
 
-	for(i=0; i<3; i+=3)
-		printf("%d %d %d\n", min[i] min[i+1] min[i+2])
+	for(i=0; i<3; i+=3) {
+		printf("%d %d %d\n", min[i], min[i+1], min[i+2]);
+	}
 
 	//free
 	cudaFree(S);
