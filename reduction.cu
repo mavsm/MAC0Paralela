@@ -19,10 +19,10 @@ void findMin(int N, int *S, int *min) {
 				S[tId*9+bId] = S[(tId+round)*9+bId];
 		}
 
-		if(tId == 0 && round%2 != 0){
+		/*if(tId == 0 && round%2 != 0){
 			if(S[bId] > S[round*9+bId + 9])
 				S[bId] = S[round*9+bId+9];
-		}
+		}*/
 		if(tId == 0)
 			printf("Sou %d e olhei para %d\ntId = %d, bId = %d, round = %d \n", tId*9 + bId, (tId+round)*9+bId, tId, bId, round);
 
