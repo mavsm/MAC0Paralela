@@ -38,28 +38,30 @@ int main(int argc, char **argv) {
 	int *S; //N matrizes 3x3
 	int *min;
 	int threadsPerBlock, blockNum;
+	char aux[3];
 
 	//inicializa
 	if(argc != 2) {
 		printf("Número errado de argumentos!!\n");
-		return 1;
+		return 0;
 	}
-
 	lista = fopen(argv[1], "r");
+	printf("Leu arquivo\n");
 
 	fscanf(lista, "%d", &numMatrix);
+	printf("%d\n", numMatrix);
 
 	cudaMallocManaged(&S, 9*numMatrix*sizeof(int));
 	cudaMallocManaged(&min, 9*sizeof(int));
-
+	printf("Alocou memoria\n");
 
 	for(i=0;i<numMatrix*9; i+=9) {
-		fscanf(lista, "");
+		fscanf(lista, "%s", aux);
 		fscanf(lista, "%d %d %d", &S[i], &S[i+1], &S[i+2]);
 		fscanf(lista, "%d %d %d", &S[i+3], &S[i+1+3], &S[i+2+3]);
 		fscanf(lista, "%d %d %d", &S[i+6], &S[i+1+6], &S[i+2+6]);
 	}
-
+	printf("terminou leitura\n");
 
 	//executa
 	threadsPerBlock = numMatrix/2;
@@ -68,7 +70,7 @@ int main(int argc, char **argv) {
 	findMin<<< blockNum, threadsPerBlock >>>(numMatrix, S, min);
 	cudaDeviceSynchronize();
 
-	for(i=0; i<3; i+=3) {
+	for(i=0; i<3; i+=1) {
 		printf("%d %d %d\n", min[i], min[i+1], min[i+2]);
 	}
 

@@ -4,6 +4,9 @@ CC = nvcc
 default:
 	${CC}  reduction.cu ${CFLAGS} -o executavel
 
-makeTest:
+run:
+	./executavel test.txt
+
+createTest:
 	gcc matrixMaker.c -o matrixMaker
 	./matrixMaker
