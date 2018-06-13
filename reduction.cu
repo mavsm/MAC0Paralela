@@ -13,7 +13,7 @@ void findMin(int N, int *S, int *min) {
 	int bId = blockIdx.x;
 
 	//A cada round toda thread tem um "companheiro" na outra metade de round. Desse modo todo elemento é checado
-	for(unsigned int round=N/2; round>1; round/=2) {
+	for(unsigned int round=N/2; round>0; round/=2) {
 		if(tId < round) {
 			if(S[tId*9 + bId] > S[(tId+round)*9+bId])
 				S[tId*9+bId] = S[(tId+round)*9+bId];
@@ -74,9 +74,10 @@ int main(int argc, char **argv) {
 	findMin<<< blockNum, threadsPerBlock >>>(numMatrix, S, min);
 	cudaDeviceSynchronize();
 
-	for(i=0; i<3; i+=1) {
-		printf("%d %d %d\n", min[i], min[i+1], min[i+2]);
-	}
+	printf("%d %d %d\n", min[0], min[1], min[2]);
+	printf("%d %d %d\n", min[3], min[4], min[5]);
+	printf("%d %d %d\n", min[6], min[7], min[8]);
+		
 
 	//free
 	cudaFree(S);
