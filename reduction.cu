@@ -23,7 +23,7 @@ void findMin(int N, int *S, int *min) {
 			if(S[tId + bId] > S[tId+round*9+bId + 1])
 				S[tId+bId] = S[tId+round*9+bId];
 		}
-		printf("Sou %d e olhei para %d\n", tId, tId+round*9+bId)
+		printf("Sou %d e olhei para %d\n", tId, tId+round*9+bId);
 
 		__syncthreads();
 	}
