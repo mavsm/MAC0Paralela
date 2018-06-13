@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 	blockNum = 9;
 
 	//PARA RODAR NA REDE LINUX
-	CudaSetDevice(0);
+	cudaSetDevice(0);
 
 	findMin<<< blockNum, threadsPerBlock >>>(numMatrix, S, min);
 	cudaDeviceSynchronize();
