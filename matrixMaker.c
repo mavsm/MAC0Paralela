@@ -5,7 +5,7 @@
 
 int main() {
 	FILE *file;
-	int numMatrix = 10;
+	int numMatrix = 2;
 	int cont, i, j;
 
 	file = fopen("test.txt", "w");
