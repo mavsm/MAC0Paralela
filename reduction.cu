@@ -13,7 +13,7 @@ void findMin(int N, int *S, int *min) {
 	int bId = blockIdx.x;
 
 	//A cada round toda thread tem um "companheiro" na outra metade de round. Desse modo todo elemento é checado
-	for(unsigned int round=N/2; round>0; round/=2) {
+	for(unsigned int round=N/2; round>1; round/=2) {
 		if(tId < round) {
 			if(S[tId + bId] > S[tId+round*9+bId])
 				S[tId+bId] = S[tId+round*9+bId];
@@ -23,7 +23,7 @@ void findMin(int N, int *S, int *min) {
 			if(S[tId + bId] > S[tId+round*9+bId + 1])
 				S[tId+bId] = S[tId+round*9+bId];
 		}
-		printf("Sou %d e olhei para %d\n", tId, tId+round*9+bId);
+		printf("Sou %d e olhei para %d\ntId = %d, bId = %d, round = %d \n", tId + bId, tId+round*9+bId, tId, bId, round);
 
 		__syncthreads();
 	}
