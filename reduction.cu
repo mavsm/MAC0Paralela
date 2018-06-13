@@ -45,14 +45,12 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 	lista = fopen(argv[1], "r");
-	printf("Leu arquivo\n");
 
 	fscanf(lista, "%d", &numMatrix);
 	printf("%d\n", numMatrix);
 
 	cudaMallocManaged(&S, 9*numMatrix*sizeof(int));
 	cudaMallocManaged(&min, 9*sizeof(int));
-	printf("Alocou memoria\n");
 
 	for(i=0;i<numMatrix*9; i+=9) {
 		fscanf(lista, "%s", aux);
@@ -60,14 +58,13 @@ int main(int argc, char **argv) {
 		fscanf(lista, "%d %d %d", &S[i+3], &S[i+1+3], &S[i+2+3]);
 		fscanf(lista, "%d %d %d", &S[i+6], &S[i+1+6], &S[i+2+6]);
 	}
-	printf("terminou leitura\n");
 
 	//executa
 	threadsPerBlock = numMatrix/2;
 	blockNum = 9;
 
 	//PARA RODAR NA REDE LINUX
-	cudaSetDevice(0);
+	//cudaSetDevice(0);
 
 	findMin<<< blockNum, threadsPerBlock >>>(numMatrix, S, min);
 	cudaDeviceSynchronize();
