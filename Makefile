@@ -1,4 +1,4 @@
-CFLAGS = -lpthread
+CFLAGS = -lpthread -g -G
 CC = nvcc
 
 default:
