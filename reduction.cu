@@ -9,8 +9,8 @@
 
 __global__ 
 void findMin(int N, int *S, int *min) {
-	int tId = threadIdx.x;
-	int bId = blockIdx.x;
+	int tId = threadIdx.x; //thread ID
+	int bId = blockIdx.x; //block ID
 
 	int roundAnt = N;
 	//A cada round toda thread tem um "companheiro" na outra metade de round. Desse modo todo elemento é checado
@@ -47,7 +47,6 @@ int main(int argc, char **argv) {
 	lista = fopen(argv[1], "r");
 
 	fscanf(lista, "%d", &numMatrix);
-	printf("%d\n", numMatrix);
 
 	cudaMallocManaged(&S, 9*numMatrix*sizeof(int));
 	cudaMallocManaged(&min, 9*sizeof(int));

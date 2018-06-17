@@ -1,0 +1,31 @@
+	Para este EP primeiramente é feita a leitura do arquivo de entrada, o numero de
+matrizes é armazenada numa variável N a parte e todas as matrizes são armazenadas 
+no vetor compartilhado S. Como todas as matrizes são todas 3x3 esse vetor fica 
+organzido na seguinte forma para qualquer k < numero de matrizes:
+S[k*9] é o a11 da matriz k
+S[K*9 + 1] é o a12 da matriz k
+...
+S[K*9 + 8] é o a33 da matriz k
+
+	Após isso usando CUDA são alocados 9 blocos, um para comparar cada elemento 
+de uma matriz 3x3. Cada bloco terá N/2 threads que serão usadas para as operações
+e em seguida começa o processamento.
+
+	Cada bloco é responsável por comparar os elementos de uma posição de cada uma
+das N matrizes. A execução é dividida em "rounds", no 1º round do bloco 1 o 
+elemento a11 da primeira matriz será comparado com o elemento a11 na matriz 
+N/2 + 1 e o valor do resultado será armazenado na primeira matriz, o elemento a11
+da segunda matriz será comparado com o mesmo elemento da matriz N/2 + 2 o resultado
+será armazenado na segunda matriz e assim por diante. O mesmo ocorre com o bloco 2, 
+só que ele comparará o elemento das matrizes referentes ao a12.
+	No 2º round todas as matrizes com identificador maior que N/2 já foram comparadas
+então só precisamos trabalhar com a primeira metade do vetor S. Então as operações
+são feitas novamente utilizando N/4 ao invés de N/2.
+	Esse processo é repetido até que sobre somente uma matriz e esta será a matriz
+mínima. No código existe uma forma de tratar com um número impares de matrizes.
+
+	
+	Realizar a redução de S com respeito à ⊕ na GPU se mostrou uma forma muito 
+eficiente de se realizar a operação, mesmo com 2000 matrizes o programa roda de 
+forma instantânea. Porém nós percebemos que quando há mais de 3000 matrizes o programa
+deixa de funcionar.
