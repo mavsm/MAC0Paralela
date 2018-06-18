@@ -32,13 +32,13 @@ void findMin(int N, int *S, int *min) {
 	}
 	if(tId == 0)
 		if (S[bId] < min[bId])
-		min[bId] = S[bId];
+			min[bId] = S[bId];
 
 }
 
 int main(int argc, char **argv) {
 	FILE *lista;
-	int numMatrixTotal, numMatrix, i, sizeOfS;
+	int numMatrixTotal, numMatrix, i;
 	int *S; //N matrizes 3x3
 	int *min;
 	int threadsPerBlock, blockNum;
@@ -53,25 +53,24 @@ int main(int argc, char **argv) {
 
 	fscanf(lista, "%d", &numMatrixTotal);
 	numMatrix = numMatrixTotal;
-	printf("%d\n", numMatrixTotal);
 
 	cudaMallocManaged(&min, 9*sizeof(int));
 	for (i = 0; i < 9; i++)
 		min[i] = INT_MAX;
 
-	while(numMatrix > 0) {
-		if (numMatrix > 2048) {
-			sizeOfS = 2048;
-			numMatrix -= 2048;
+	while(numMatrixTotal > 0) {
+		if (numMatrixTotal > 2048) {
+			numMatrix = 2048;
+			numMatrixTotal -= 2048;
 		}
 		else {
-			sizeOfS = numMatrix;
-			numMatrix = 0;
+			numMatrix = numMatrixTotal;
+			numMatrixTotal = 0;
 		}
 
-		cudaMallocManaged(&S, 9*sizeOfS*sizeof(int));
+		cudaMallocManaged(&S, 9*numMatrix*sizeof(int));
 
-		for(i=0;i<sizeOfS*9; i+=9) {
+		for(i=0;i<numMatrix*9; i+=9) {
 			fscanf(lista, "%s", aux);
 			fscanf(lista, "%d %d %d", &S[i], &S[i+1], &S[i+2]);
 			fscanf(lista, "%d %d %d", &S[i+3], &S[i+1+3], &S[i+2+3]);
@@ -79,16 +78,14 @@ int main(int argc, char **argv) {
 		}
 
 		//executa
-		threadsPerBlock = sizeOfS/2;
+		threadsPerBlock = numMatrix/2;
 		blockNum = 9;
 
 
 		//PARA RODAR NA REDE LINUX
-		//cudaSetDevice(0);
-		printf("%d\n", threadsPerBlock);
-		findMin<<< blockNum, threadsPerBlock >>>(numMatrixTotal, S, min);
-		printf("%d", S[0]);
+		findMin<<< blockNum, threadsPerBlock >>>(numMatrix, S, min);
 		cudaDeviceSynchronize();
+		//cudaSetDevice(0);
 		cudaFree(S);
 		//break;
 	}
