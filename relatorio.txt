@@ -9,7 +9,10 @@ S[K*9 + 8] é o a33 da matriz k
 
 	Após isso usando CUDA são alocados 9 blocos, um para comparar cada elemento 
 de uma matriz 3x3. Cada bloco terá N/2 threads que serão usadas para as operações
-e em seguida começa o processamento.
+e em seguida começa o processamento. Como em CUDA há um limite de 1024 threads por
+bloco esse processo terá que ser feito com no máximo 2048 matrizes de uma só vez,
+caso haja mais matrizes o programa resolverá isso em outras iterações deste mesmo
+processo.
 
 	Cada bloco é responsável por comparar os elementos de uma posição de cada uma
 das N matrizes. A execução é dividida em "rounds", no 1º round do bloco 1 o 
@@ -23,9 +26,11 @@ então só precisamos trabalhar com a primeira metade do vetor S. Então as oper
 são feitas novamente utilizando N/4 ao invés de N/2.
 	Esse processo é repetido até que sobre somente uma matriz e esta será a matriz
 mínima. No código existe uma forma de tratar com um número impares de matrizes.
-
 	
 	Realizar a redução de S com respeito à ⊕ na GPU se mostrou uma forma muito 
-eficiente de se realizar a operação, mesmo com 2000 matrizes o programa roda de 
-forma instantânea. Porém nós percebemos que quando há mais de 3000 matrizes o programa
-deixa de funcionar.
+eficiente de se realizar a operação, mesmo com 10000 matrizes o processo ocorre
+em menos de 5s. Tivemos problemas em escalar o programa devido ao limite de 1024
+threads por bloco mas conseguimos corrigir isso. Ao final concluímos que utilizar
+a GPU para processamento é viável desde que haja a disponibilidade de hardware e
+que o programa seja feito corretamente, algo que, apesar de não ser impossível,
+pode ser um desafio para sistemas maiores.
